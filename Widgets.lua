@@ -4,6 +4,8 @@ addon.UndauntedWidgets = UndauntedWidgets
 
 local ACCENT_R, ACCENT_G, ACCENT_B = 1.0, 0.525, 0.282
 
+-- Just in cases need?
+-- Instead using WoW default Frame, decided to make coustom one.
 local function CreateBackdrop(frame, r, g, b, a, borderR, borderG, borderB)
     if not frame.SetBackdrop then
         local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")

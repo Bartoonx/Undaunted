@@ -1,4 +1,5 @@
 SLASH_SPECEXPORTMID1 = "/specexport"
+-- Export profession specs and recipes to JSON for external use, website.
 
 -- GetProfessionInfo(index) : name, icon, skillLevel, maxSkillLevel, numAbilities, spelloffset, skillLine, skillModifier, specializationIndex, specializationOffset - (Get Details)
 -- GetProfessions() : prof1, prof2, archaeology, fishing, cooking                               (Get ProfessionID)
@@ -94,7 +95,6 @@ local exportResults = {}
 local currentStep = 0
 local professionsToScan = {}
 
--- Frame to watch for data readiness
 local watchFrame = CreateFrame("Frame")
 
 local function FinishExport()
@@ -105,7 +105,6 @@ local function FinishExport()
     local realm = GetRealmName()
     local region = GetCVar("portal")
     
-    -- Assemble final JSON
     local playerInfo = string.format('{"player":"%s", "realm":"%s","region":"%s"}', name, realm, region)
     local combined = "[" .. table.concat(exportResults, ",") .. "," .. playerInfo .. "]"
     
@@ -158,7 +157,6 @@ local function ScrapeActiveProfession()
             local specRootPathID = C_ProfSpecs.GetRootPathForTab(specTabID)
             local pathIDs = {}
             
-            -- Recursive function to find all nodes in the tree
             local function appendChildPathIDs(t, pathID)
                 t[pathID] = 1
                 local children = C_ProfSpecs.GetChildrenForPath(pathID)
@@ -194,7 +192,6 @@ local function ScrapeActiveProfession()
     table.insert(exportResults, serialize(profData))
 end
 
--- Timing handler for switching tabs
 watchFrame:SetScript("OnEvent", function(self, event)
     if currentStep == 1 then
         print("|cffffff00[Step 1]|r Scanned " .. (professionsToScan[1].name or "Primary Profession"))
@@ -202,6 +199,7 @@ watchFrame:SetScript("OnEvent", function(self, event)
         
         if #professionsToScan > 1 then
             currentStep = 2
+            -- Due Blizzard restricted API, can't open 2x Profession, even giving them some time...
             print("|cff00ffff[Step 2]|r Almost there! Click your |cffffd100SECOND|r profession tab.")
         else
             FinishExport()
@@ -232,7 +230,6 @@ SlashCmdList["SPECEXPORTMID"] = function()
 
     if #professionsToScan > 0 then
         watchFrame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
-        -- Automatically trigger the first one
         C_TradeSkillUI.OpenTradeSkill(professionsToScan[1].baseID)
     else
         print("|cffff0000Error:|r No supported professions found.")

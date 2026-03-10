@@ -4,7 +4,7 @@ addon.Settings = {
     enabled = true,
     style = "Custom",
 }
-
+-- self explained, kind is from WidgetsLoader.lua
 addon.WidgetsConfig = {
     [1] = {
         {

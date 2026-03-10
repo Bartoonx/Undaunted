@@ -6,12 +6,7 @@ local maxLines = 3
 local lines = {}
 local activeTimers = {}
 
-local keywordConfigs = {
-    ["interrupt"] = { color = {r = 1, g = 0, b = 0}, prefix = "!!! " }, -- Red for interrupts
-    ["dispel"] = { color = {r = 0, g = 1, b = 1}, prefix = "[DISPEL] " }, -- Cyan for dispels
-    ["run"] = { color = {r = 1, g = 1, b = 0}, prefix = "MOVEMENT: " }, -- Yellow for movement
-}
-
+-- prepare creating lines
 for i = 1, maxLines do
     local line = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
     line:SetJustifyH("CENTER")
@@ -23,6 +18,7 @@ for i = 1, maxLines do
     lines[i] = line
 end
 
+-- Update the GUI Position, Currently static, due can't use GetHeight while in combat.
 local function UpdatePositions()
     local visibleLines = {}
     for _, line in ipairs(lines) do
@@ -43,6 +39,7 @@ local function UpdatePositions()
     end
 end
 
+-- Get the Free line, else get the oldest line one.
 local function GetFreeLine()
     for _, line in ipairs(lines) do
         if not line:IsShown() then
@@ -65,6 +62,7 @@ local function GetFreeLine()
     return oldest
 end
 
+-- Function to show the warning at external frame
 function Undaunted_ShowWarning(msg)
     local line = GetFreeLine()
 
@@ -96,6 +94,7 @@ function Undaunted_ShowWarning(msg)
     end)
 end
 
+-- Hook into the default Raid Warning system
 hooksecurefunc("RaidNotice_AddMessage", function(_, msg)
     if UndauntedDB.externalRaidWarningWindows then
 

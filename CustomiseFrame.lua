@@ -4,6 +4,9 @@ addon.MainUI = UI
 
 local ACCENT_R, ACCENT_G, ACCENT_B = 1.0, 0.525, 0.282
 
+
+-- Whole section for Config UI (/undaunted or /ud)
+-- Fetched from Widgets.lua and WidgetsConfig.lua
 SLASH_UNDAUNTED1 = "/undaunted"
 SLASH_UNDAUNTED2 = "/ud"
 SlashCmdList["UNDAUNTED"] = function()

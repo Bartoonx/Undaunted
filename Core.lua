@@ -2,6 +2,7 @@ local addonName, addon = ...
 local Undaunted = addon
 _G[addonName] = Undaunted
 
+-- Database, currently all in one, will split later to different modules.
 local defaults = {
     raidWarningScale = 1.0,
     enabledCustomRaidWarning = false,
@@ -45,6 +46,7 @@ local defaults = {
     },
 }
 
+-- Create new varaibles if not exist, to avoid nil errors.
 local function CopyDefaults(dest, src)
     for k, v in pairs(src) do
         if type(v) == "table" then
@@ -58,6 +60,7 @@ local function CopyDefaults(dest, src)
     end
 end
 
+-- Generated DB
 local function LoadSettings()
     if not UndauntedDB then
         UndauntedDB = {}
@@ -65,6 +68,7 @@ local function LoadSettings()
     CopyDefaults(UndauntedDB, defaults)
 end
 
+-- Default RaidWarningFrame, currently Scale not working.
 local function ApplyRaidwarningSettings()
     if UndauntedDB.enabledCustomRaidWarning then
         --RaidNotice_AddMessage(RaidWarningFrame, "Undaunted Addon Loaded|r", ChatTypeInfo["RAID_WARNING"])
@@ -81,6 +85,7 @@ C_ChatInfo.RegisterAddonMessagePrefix("UNDAUNTED_NOTE")
 
 local receivedNotes = {}
 
+-- Recived Notes across Players in raids.
 local noteReceiver = CreateFrame("Frame")
 noteReceiver:RegisterEvent("CHAT_MSG_ADDON")
 noteReceiver:SetScript("OnEvent", function(self, event, prefix, message, channel, sender)
@@ -151,13 +156,7 @@ f:SetScript("OnEvent", function(self, event, addon)
     end
 end)
 
-SLASH_UNDAUNTEDRESET1 = "/undreset"
-SlashCmdList["UNDAUNTEDRESET"] = function()
-    UndauntedDB.notes = {}
-    print("Undaunted: All notes cleared!")
-    ReloadUI()
-end
-
+-- Slash commands for Pull
 SLASH_PULL1 = "/pull"
 SlashCmdList["PULL"] = function(msg)
     local time = tonumber(msg)
@@ -170,6 +169,7 @@ SlashCmdList["PULL"] = function(msg)
     end
 end
 
+-- Slash command for Ready Check
 SLASH_RCREADY1 = "/rc"
 SlashCmdList["RCREADY"] = function()
     if DoReadyCheck then
@@ -177,6 +177,8 @@ SlashCmdList["RCREADY"] = function()
     end
 end
 
+-- Slash command for Break, with cancel option.
+-- ToDo: Add external timer display for break, and maybe pull timer as well, to make it more visible.
 SLASH_BREAK1 = "/break"
 SlashCmdList["BREAK"] = function(msg)
     local minutes = tonumber(msg)
