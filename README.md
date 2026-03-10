@@ -1,6 +1,5 @@
 ## Modules Overview
 
-Each module in this repository is designed to be standalone yet highly interoperable.
 
 ### System Core
 * **Core**: The backbone of the project. It handles the lifecycle of the application, event bus management, and cross-module communication.
