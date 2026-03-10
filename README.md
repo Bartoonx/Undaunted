@@ -10,7 +10,7 @@ Each module in this repository is designed to be standalone yet highly interoper
 
 ### Accessibility & Display
 * **AccessbilityWarning**: A specialized module that monitors UI state to ensure visibility and usability standards are met, alerting the user to potential issues.
-* **CustomiseFrame**: The interaction layer that allows users to move, scale, and lock UI elements in real-time.
+* **CustomiseFrame**: The main core, to open Config ingame.
 * **NoteDisplay**: A clean, prioritized overlay system for displaying text-based reminders, tactical notes, or system logs.
 
 ### Utility & Data
