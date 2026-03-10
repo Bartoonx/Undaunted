@@ -6,12 +6,6 @@ local maxLines = 3
 local lines = {}
 local activeTimers = {}
 
-local keywordConfigs = {
-    ["interrupt"] = { color = {r = 1, g = 0, b = 0}, prefix = "!!! " }, -- Red for interrupts
-    ["dispel"] = { color = {r = 0, g = 1, b = 1}, prefix = "[DISPEL] " }, -- Cyan for dispels
-    ["run"] = { color = {r = 1, g = 1, b = 0}, prefix = "MOVEMENT: " }, -- Yellow for movement
-}
-
 for i = 1, maxLines do
     local line = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
     line:SetJustifyH("CENTER")
