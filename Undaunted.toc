@@ -1,0 +1,23 @@
+## Interface: 110100, 120000 ,120001
+## Title: Undaunted
+## Notes: Accessibility & visibility enhancements for Undaunted Guild players.
+## Author: Freddo
+## Version: 0.1
+## SavedVariables: UndauntedDB
+
+Core.lua
+
+
+
+Widgets.lua
+WidgetLoader.lua
+
+WidgetsConfig.lua
+AccessibleWarnings.lua
+
+HealerMana.lua
+CustomiseFrame.lua
+
+NoteDisplay.lua
+
+ProfessionExporter.lua
