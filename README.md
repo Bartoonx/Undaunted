@@ -14,5 +14,13 @@ Each module in this repository is designed to be standalone yet highly interoper
 * **NoteDisplay**: A clean, prioritized overlay system for displaying text-based reminders, tactical notes, or system logs.
 
 ### Utility & Data
-* **HealerMana**: A high-performance tracking module specifically tuned for monitoring resource pools and regeneration in real-time.
+* **HealerMana**: A high-performance tracking module specifically tuned for monitoring resource pools.
 * **ProfessionExporter**: An automated tool for scraping profession-based data and formatting it for external use on Site.
+
+  Currently Commands:
+
+  /UD or /Undaunted - Open config
+  /rc - short for /readycheck
+  /pull - short for /cooldown
+  /break - short for breaktimers (/countdown 300)
+  /specexport - export JSON for external use on Site.
