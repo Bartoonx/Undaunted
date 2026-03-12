@@ -762,9 +762,9 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
         {icon = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_6:0|t", text = "{rt6}"},
         {icon = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_7:0|t", text = "{rt7}"},
         {icon = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:0|t", text = "{rt8}"},
-        {icon = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t", text = "{healer}"},
+        {icon = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:22:41|t", text = "{dps}"},
         {icon = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:0:19:22:41|t", text = "{tank}"},
-        {icon = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t", text = "{dps}"},
+        {icon = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:0:0:0:0:64:64:20:39:1:20|t", text = "{healer}"},
     }
     
     local lastBtn
@@ -1018,7 +1018,7 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
         local noteContent = editBox:GetText()
         
         if noteName == "" then
-            print("Undaunted: Note name cannot be empty!")
+            addon.Logger:Error("Note name cannot be empty!")
             return
         end
         
@@ -1067,13 +1067,13 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
         end
         
         if not currentNoteIndex or not notes[currentNoteIndex] then
-            print("Undaunted: No note selected to delete!")
+            addon.Logger:Error("No note selected to delete!")
             return
         end
         
         local noteName = notes[currentNoteIndex].name
         table.remove(notes, currentNoteIndex)
-        print("Undaunted: Deleted note '" .. noteName .. "'")
+        addon.Logger:Info("Deleted note '" .. noteName .. "'")
         
         currentNoteIndex = nil
         container.activeProfileBtn = nil
@@ -1091,7 +1091,7 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
     
     function container:SendToRaid()
         if not (UnitIsGroupLeader("player") or (IsInRaid() and UnitIsGroupAssistant("player"))) then
-            print("Undaunted: You need leader or assistant permissions!")
+            addon.Logger:Error("You need leader or assistant permissions!")
             return
         end
         
@@ -1099,12 +1099,12 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
         local noteContent = editBox:GetText()
         
         if noteContent == "" then
-            print("Undaunted: Note is empty!")
+            addon.Logger:Error("Note is empty!")
             return
         end
         
         if not IsInRaid() and not IsInGroup() then
-            print("Undaunted: Not in a group!")
+            addon.Logger:Error("Not in a group!")
             return
         end
         
@@ -1125,7 +1125,7 @@ function UndauntedWidgets:NotesContainer(parent, leftWidth, topHeight, bottomHei
             C_ChatInfo.SendAddonMessage(prefix, msg, channel)
         end
         
-        print(string.format("Undaunted: Sent note '%s' in %d chunks", noteName, #chunks))
+        addon.Logger:Success(string.format("Sent note '%s' in %d chunks", noteName, #chunks))
     end
     
     function container:RefreshProfileList()

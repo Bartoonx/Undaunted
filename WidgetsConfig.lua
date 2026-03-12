@@ -12,6 +12,16 @@ addon.WidgetsConfig = {
             entries = {
                 {
                     kind = "checkbox",
+                    label = "Enable Raid Warning Module",
+                    getter = function(s) return s.modules.raidWarnings end,
+                    setter = function(s, v) 
+                        s.modules.raidWarnings = v 
+                        if v and not _G.UndauntedWarningFrame and addon.InitAccessibleWarnings then addon:InitAccessibleWarnings() end
+                        if not v then addon.Logger:Warning("Reload UI to free memory.") end
+                    end,
+                },
+                {
+                    kind = "checkbox",
                     label = "Enable scaling default Raid Warning Message",
                     setter = function(s, v) s.enabledCustomRaidWarning = v end,
                     getter = function(s) return s.enabledCustomRaidWarning end,
@@ -112,9 +122,15 @@ addon.WidgetsConfig = {
             entries = {
                 {
                     kind = "checkbox",
-                    label = "Enable",
-                    setter = function(s, v) addon.HealerMana:Toggle(v) end,
-                    getter = function(s) return s.healerMana.enabled end,
+                    label = "Enable Module",
+                    getter = function(s) return s.modules.healerMana end,
+                    setter = function(s, v) 
+                        s.modules.healerMana = v
+                        -- Sync internal enabled state
+                        s.healerMana.enabled = v 
+                        if v then addon.HealerMana:Init() addon.HealerMana:Refresh()
+                        else addon.HealerMana:Toggle(false) addon.Logger:Warning("Reload UI to free memory.") end
+                    end,
                 },
                 {
                     kind = "checkbox",
@@ -236,13 +252,16 @@ addon.WidgetsConfig = {
             {
                 kind = "checkbox",
                 label = "Enable On-Screen Note Display",
-                getter = function(s) return s.noteDisplay.enabled end,
+                getter = function(s) return s.modules.notes end,
                 setter = function(s, v) 
+                    s.modules.notes = v
                     s.noteDisplay.enabled = v
                     if v then
+                        addon.NoteDisplay:Init()
                         addon.NoteDisplay:Show("Test Note", "This is a test note.\n\n{rt1} Star marker\n{rt2} Circle marker\n\n{tank} Tank role\n{healer} Healer role")
                     else
                         addon.NoteDisplay:Hide()
+                        addon.Logger:Warning("Reload UI to free memory.")
                     end
                 end
             },
@@ -267,6 +286,5 @@ addon.WidgetsConfig = {
             }
         }
     }
-    },
-
+    }
 }

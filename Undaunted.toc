@@ -1,8 +1,8 @@
 ## Interface: 110100, 120000 ,120001
 ## Title: Undaunted
 ## Notes: Accessibility & visibility enhancements for Undaunted Guild players.
-## Author: Freddo
-## Version: 0.1
+## Author: Freddo, Gartoon
+## Version: 0.2
 ## SavedVariables: UndauntedDB
 
 Core.lua

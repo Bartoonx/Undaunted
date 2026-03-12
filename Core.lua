@@ -44,7 +44,39 @@ local defaults = {
         y = 200,
         font = "GameFontHighlight",
     },
+
+    modules = {
+        raidWarnings = true,
+        healerMana = true,
+        notes = true,
+        professionExporter = true,
+    },
 }
+
+-- Logger utility
+addon.Logger = {}
+local Logger = addon.Logger
+local ADDON_PREFIX = "|cffFFD147[Undaunted]|r"
+
+function Logger:Info(message)
+    print(string.format("%s %s", ADDON_PREFIX, message))
+end
+
+function Logger:Success(message)
+    print(string.format("%s |cff00FF00%s|r", ADDON_PREFIX, message))
+end
+
+function Logger:Warning(message)
+    print(string.format("%s |cffFFFF00Warning: %s|r", ADDON_PREFIX, message))
+end
+
+function Logger:Error(message)
+    print(string.format("%s |cffff0000Error: %s|r", ADDON_PREFIX, message))
+end
+
+function Logger:Debug(message)
+    print(string.format("%s |cff00ffff%s|r", ADDON_PREFIX, message))
+end
 
 -- Create new varaibles if not exist, to avoid nil errors.
 local function CopyDefaults(dest, src)
@@ -126,7 +158,7 @@ noteReceiver:SetScript("OnEvent", function(self, event, prefix, message, channel
                 return
             end
             
-            print(string.format("Undaunted: Received note '%s' from %s", noteName, sender))
+            Logger:Info(string.format("Received note '%s' from %s", noteName, sender))
             
             table.insert(UndauntedDB.notes, {
                 name = noteName .. " (from " .. sender .. ")",
@@ -148,9 +180,28 @@ noteReceiver:SetScript("OnEvent", function(self, event, prefix, message, channel
     end
 end)
 
+local function InitializeModules()
+    local db = UndauntedDB.modules
+    
+    -- Lazy load: Only run the Init functions if the module is enabled in DB
+    if db.raidWarnings and addon.InitAccessibleWarnings then
+        addon:InitAccessibleWarnings()
+    end
+
+    if db.healerMana and addon.HealerMana then
+        addon.HealerMana:Init()
+        addon.HealerMana:Refresh()
+    end
+
+    if db.notes and addon.NoteDisplay then
+        addon.NoteDisplay:Init()
+    end
+end
+
 f:SetScript("OnEvent", function(self, event, addon)
     if addon == addonName then
         LoadSettings()
+        InitializeModules()
         ApplyRaidwarningSettings()
         self:UnregisterEvent("ADDON_LOADED")
     end
@@ -186,7 +237,7 @@ SlashCmdList["BREAK"] = function(msg)
     if minutes == 0 then
         if C_PartyInfo and C_PartyInfo.DoCountdown then
             C_PartyInfo.DoCountdown(0)
-            print("Break timer cancelled.")
+            Logger:Info("Break timer cancelled.")
         end
         return
     end
@@ -199,7 +250,7 @@ SlashCmdList["BREAK"] = function(msg)
 
     if C_PartyInfo and C_PartyInfo.DoCountdown then
         C_PartyInfo.DoCountdown(seconds)
-        print("Break for " .. minutes .. " minute(s).")
+        Logger:Info("Break for " .. minutes .. " minute(s).")
     end
 end
 

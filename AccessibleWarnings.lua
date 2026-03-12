@@ -1,22 +1,10 @@
-local frame = CreateFrame("Frame", "UndauntedWarningFrame", UIParent)
-frame:SetSize(UIParent:GetWidth() * 0.8, 400)
-frame:SetPoint("CENTER", 0, 200)
+local ADDON_NAME, addon = ...
 
+local frame -- defined later in Init
 local maxLines = 3
 local lines = {}
 local activeTimers = {}
 
--- prepare creating lines
-for i = 1, maxLines do
-    local line = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
-    line:SetJustifyH("CENTER")
-    line:SetJustifyV("MIDDLE")
-    line:SetWordWrap(true)
-    line:SetWidth(frame:GetWidth() - 40)
-    line:SetAlpha(0)
-    line:Hide()
-    lines[i] = line
-end
 
 -- Update the GUI Position, Currently static, due can't use GetHeight while in combat.
 local function UpdatePositions()
@@ -64,6 +52,8 @@ end
 
 -- Function to show the warning at external frame
 function Undaunted_ShowWarning(msg)
+    if not frame then return end -- Safety check if module not loaded
+
     local line = GetFreeLine()
 
     if activeTimers[line] then
@@ -94,13 +84,31 @@ function Undaunted_ShowWarning(msg)
     end)
 end
 
--- Hook into the default Raid Warning system
-hooksecurefunc("RaidNotice_AddMessage", function(_, msg)
-    if UndauntedDB.externalRaidWarningWindows then
+function addon:InitAccessibleWarnings()
+    frame = CreateFrame("Frame", "UndauntedWarningFrame", UIParent)
+    frame:SetSize(UIParent:GetWidth() * 0.8, 400)
+    frame:SetPoint("CENTER", 0, 200)
 
-        Undaunted_ShowWarning(msg)
+    -- prepare creating lines
+    for i = 1, maxLines do
+        local line = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
+        line:SetJustifyH("CENTER")
+        line:SetJustifyV("MIDDLE")
+        line:SetWordWrap(true)
+        line:SetWidth(frame:GetWidth() - 40)
+        line:SetAlpha(0)
+        line:Hide()
+        lines[i] = line
     end
-    if UndauntedDB.hide then
-        RaidWarningFrame:Hide()
-    end
-end)
+
+    -- Hook into the default Raid Warning system
+    -- We only hook if this module is initialized
+    hooksecurefunc("RaidNotice_AddMessage", function(_, msg)
+        if UndauntedDB.externalRaidWarningWindows then
+            Undaunted_ShowWarning(msg)
+        end
+        if UndauntedDB.hide then
+            RaidWarningFrame:Hide()
+        end
+    end)
+end

@@ -267,9 +267,3 @@ function NoteDisplay:ToggleEnable(enable)
         self:Hide()
     end
 end
-
-C_Timer.After(2, function()
-    if UndauntedDB.noteDisplay and UndauntedDB.noteDisplay.enabled then
-        NoteDisplay:Init()
-    end
-end)

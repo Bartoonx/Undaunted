@@ -354,10 +354,3 @@ function HealerMana:Toggle(enable)
         container:Hide()
     end
 end
-
-C_Timer.After(2, function()
-    if UndauntedDB.healerMana.enabled then
-        HealerMana:Init()
-        HealerMana:Refresh()
-    end
-end)

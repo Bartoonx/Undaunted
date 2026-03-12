@@ -1,3 +1,5 @@
+local ADDON_NAME, addon = ...
+
 SLASH_SPECEXPORTMID1 = "/specexport"
 -- Export profession specs and recipes to JSON for external use, website.
 
@@ -109,7 +111,7 @@ local function FinishExport()
     local combined = "[" .. table.concat(exportResults, ",") .. "," .. playerInfo .. "]"
     
     ShowJSON(combined)
-    print("|cff00ff00[Done]|r Export ready! Copy the JSON from the window.")
+    addon.Logger:Success("Export ready! Copy the JSON from the window.")
 end
 
 local function ScrapeActiveProfession()
@@ -194,18 +196,18 @@ end
 
 watchFrame:SetScript("OnEvent", function(self, event)
     if currentStep == 1 then
-        print("|cffffff00[Step 1]|r Scanned " .. (professionsToScan[1].name or "Primary Profession"))
+        addon.Logger:Debug("[Step 1] Scanned " .. (professionsToScan[1].name or "Primary Profession"))
         ScrapeActiveProfession()
         
         if #professionsToScan > 1 then
             currentStep = 2
             -- Due Blizzard restricted API, can't open 2x Profession, even giving them some time...
-            print("|cff00ffff[Step 2]|r Almost there! Click your |cffffd100SECOND|r profession tab.")
+            addon.Logger:Debug("[Step 2] Almost there! Click your |cffffd100SECOND|r profession tab.")
         else
             FinishExport()
         end
     elseif currentStep == 2 then
-        print("|cffffff00[Step 2]|r Scanned Second Profession.")
+        addon.Logger:Debug("[Step 2] Scanned Second Profession.")
         ScrapeActiveProfession()
         FinishExport()
     end
@@ -232,6 +234,6 @@ SlashCmdList["SPECEXPORTMID"] = function()
         watchFrame:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED")
         C_TradeSkillUI.OpenTradeSkill(professionsToScan[1].baseID)
     else
-        print("|cffff0000Error:|r No supported professions found.")
+        addon.Logger:Error("No supported professions found.")
     end
 end
