@@ -286,5 +286,29 @@ addon.WidgetsConfig = {
             }
         }
     }
+    },
+    [5] = {
+        {
+            label = "Loot Council",
+            entries = {
+                {
+                    kind = "checkbox",
+                    label = "Enable Loot Module",
+                    getter = function(s) return s.modules.loot end,
+                    setter = function(s, v) 
+                        s.modules.loot = v
+                        s.loot.enabled = v
+                        if v and addon.Loot then addon.Loot:Init() end
+                    end,
+                },
+                {
+                    kind = "button",
+                    label = "Test Loot Session",
+                    onClick = function()
+                        if addon.Loot then addon.Loot:Test() end
+                    end
+                }
+            }
+        }
     }
 }

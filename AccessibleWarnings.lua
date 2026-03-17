@@ -1,6 +1,6 @@
 local ADDON_NAME, addon = ...
 
-local frame -- defined later in Init
+local frame
 local maxLines = 3
 local lines = {}
 local activeTimers = {}
@@ -52,7 +52,7 @@ end
 
 -- Function to show the warning at external frame
 function Undaunted_ShowWarning(msg)
-    if not frame then return end -- Safety check if module not loaded
+    if not frame then return end
 
     local line = GetFreeLine()
 
@@ -101,8 +101,6 @@ function addon:InitAccessibleWarnings()
         lines[i] = line
     end
 
-    -- Hook into the default Raid Warning system
-    -- We only hook if this module is initialized
     hooksecurefunc("RaidNotice_AddMessage", function(_, msg)
         if UndauntedDB.externalRaidWarningWindows then
             Undaunted_ShowWarning(msg)

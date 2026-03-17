@@ -14,6 +14,8 @@ local defaults = {
     timerFade = 5,
     textColor = { r = 1, g = 1, b = 1 },
 
+    loot = { enabled = true },
+
     healerMana = {
         enabled = false,
         point = "TOP",
@@ -50,6 +52,7 @@ local defaults = {
         healerMana = true,
         notes = true,
         professionExporter = true,
+        loot = true,
     },
 }
 
@@ -180,6 +183,207 @@ noteReceiver:SetScript("OnEvent", function(self, event, prefix, message, channel
     end
 end)
 
+-- Version Checker
+C_ChatInfo.RegisterAddonMessagePrefix("UNDAUNTED_VER")
+
+local VersionUI = {}
+local verFrame = nil
+local verRows = {}
+local verData = {}
+local myVer = C_AddOns.GetAddOnMetadata(addonName, "Version") or "0.0"
+
+function VersionUI:Create()
+    if verFrame then return end
+    
+    verFrame = CreateFrame("Frame", "UndauntedVersionFrame", UIParent, "BackdropTemplate")
+    verFrame:SetSize(300, 400)
+    verFrame:SetPoint("CENTER")
+    verFrame:SetMovable(true)
+    verFrame:EnableMouse(true)
+    verFrame:RegisterForDrag("LeftButton")
+    verFrame:SetScript("OnDragStart", verFrame.StartMoving)
+    verFrame:SetScript("OnDragStop", verFrame.StopMovingOrSizing)
+    
+    verFrame:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 16,
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
+    })
+    verFrame:SetBackdropColor(0, 0, 0, 0.85)
+    verFrame:SetBackdropBorderColor(0.5, 0.5, 0.5)
+    
+    verFrame.Title = verFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    verFrame.Title:SetPoint("TOP", 0, -10)
+    verFrame.Title:SetText("Version Check")
+    
+    verFrame.SubTitle = verFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    verFrame.SubTitle:SetPoint("TOP", 0, -28)
+    verFrame.SubTitle:SetText("My Version: " .. myVer)
+
+    local close = CreateFrame("Button", nil, verFrame, "UIPanelCloseButton")
+    close:SetPoint("TOPRIGHT", -2, -2)
+    
+    local scroll = CreateFrame("ScrollFrame", nil, verFrame, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 10, -50)
+    scroll:SetPoint("BOTTOMRIGHT", -30, 40)
+    
+    local content = CreateFrame("Frame")
+    content:SetSize(240, 10)
+    scroll:SetScrollChild(content)
+    verFrame.Content = content
+    
+    local btn = CreateFrame("Button", nil, verFrame, "UIPanelButtonTemplate")
+    btn:SetSize(120, 25)
+    btn:SetPoint("BOTTOM", 0, 10)
+    btn:SetText("Check Group")
+    btn:SetScript("OnClick", function() VersionUI:Scan("GROUP") end)
+    
+    local btnGuild = CreateFrame("Button", nil, verFrame, "UIPanelButtonTemplate")
+    btnGuild:SetSize(80, 25)
+    btnGuild:SetPoint("LEFT", btn, "RIGHT", 5, 0)
+    btnGuild:SetText("Guild")
+    btnGuild:SetScript("OnClick", function() VersionUI:Scan("GUILD") end)
+    
+    verFrame:Hide()
+end
+
+function VersionUI:GetRow(i)
+    if not verRows[i] then
+        local row = CreateFrame("Frame", nil, verFrame.Content)
+        row:SetSize(240, 20)
+        
+        row.Name = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        row.Name:SetPoint("LEFT", 5, 0)
+        row.Name:SetWidth(140)
+        row.Name:SetJustifyH("LEFT")
+        
+        row.Ver = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        row.Ver:SetPoint("RIGHT", -25, 0)
+        
+        row.Icon = row:CreateTexture(nil, "ARTWORK")
+        row.Icon:SetSize(14, 14)
+        row.Icon:SetPoint("LEFT", row.Ver, "RIGHT", 2, 0)
+        
+        verRows[i] = row
+    end
+    return verRows[i]
+end
+
+function VersionUI:UpdateList()
+    if not verFrame then return end
+    
+    local list = {}
+    for name, info in pairs(verData) do
+        table.insert(list, {name=name, ver=info.ver, class=info.class})
+    end
+    table.sort(list, function(a,b) return a.name < b.name end)
+    
+    for i, row in ipairs(verRows) do row:Hide() end
+    
+    for i, entry in ipairs(list) do
+        local row = self:GetRow(i)
+        row:SetPoint("TOPLEFT", 0, (i-1)*-20)
+        row:Show()
+        
+        local nameStr = entry.name
+        if entry.class then
+            local color = C_ClassColor.GetClassColor(entry.class)
+            if color then
+                nameStr = string.format("|cff%02x%02x%02x%s|r", color.r*255, color.g*255, color.b*255, entry.name)
+            end
+        end
+        row.Name:SetText(nameStr)
+        
+        row.Ver:SetText(entry.ver)
+        
+        if entry.ver == "Waiting..." then
+            row.Ver:SetTextColor(0.5, 0.5, 0.5)
+            row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Waiting")
+        elseif entry.ver == "No Addon" then
+            row.Ver:SetTextColor(0.5, 0.5, 0.5)
+            row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
+        elseif entry.ver == myVer then
+             row.Ver:SetTextColor(0, 1, 0)
+             row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+        elseif entry.ver > myVer then
+             row.Ver:SetTextColor(0, 0.5, 1)
+             row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+        else
+             row.Ver:SetTextColor(1, 0, 0)
+             row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
+        end
+    end
+    
+    verFrame.Content:SetHeight(math.max(10, #list * 20))
+end
+
+function VersionUI:Scan(type)
+    self:Create()
+    verFrame:Show()
+    wipe(verData)
+    
+    local channel
+    if type == "GUILD" then
+        channel = "GUILD"
+        verData[UnitName("player")] = {ver=myVer, class=select(2, UnitClass("player"))}
+    else
+        channel = IsInRaid() and "RAID" or (IsInGroup() and "PARTY" or nil)
+        if not channel then
+            Logger:Info("Not in a group. Scanning Guild instead.")
+            channel = "GUILD"
+        end
+        
+        if channel ~= "GUILD" then
+            local num = GetNumGroupMembers()
+            for i=1, num do
+                local unit = IsInRaid() and "raid"..i or "party"..i
+                if not IsInRaid() and i==num then unit = "player" end 
+                
+                local name = GetUnitName(unit, true)
+                local _, class = UnitClass(unit)
+                if name then
+                     name = Ambiguate(name, "short")
+                     verData[name] = {ver="Waiting...", class=class}
+                end
+            end
+            local pName = UnitName("player")
+            if verData[pName] then verData[pName].ver = myVer
+            else verData[pName] = {ver=myVer, class=select(2, UnitClass("player"))} end
+        end
+    end
+    
+    self:UpdateList()
+    C_ChatInfo.SendAddonMessage("UNDAUNTED_VER", "PING", channel)
+end
+
+local verChecker = CreateFrame("Frame")
+verChecker:RegisterEvent("CHAT_MSG_ADDON")
+verChecker:SetScript("OnEvent", function(self, event, prefix, msg, channel, sender)
+    if prefix ~= "UNDAUNTED_VER" then return end
+    
+    local senderShort = Ambiguate(sender, "short")
+    local cmd, version = strsplit("~", msg, 2)
+    
+    if cmd == "PING" then
+        if senderShort ~= UnitName("player") then
+            C_ChatInfo.SendAddonMessage("UNDAUNTED_VER", "PONG~"..myVer, "WHISPER", sender)
+        end
+    elseif cmd == "PONG" then
+        if not verData[senderShort] then
+             verData[senderShort] = {ver=version, class=nil}
+        else
+             verData[senderShort].ver = version
+        end
+        VersionUI:UpdateList()
+    end
+end)
+
+SLASH_UDVER1 = "/udver"
+SlashCmdList["UDVER"] = function()
+    VersionUI:Scan("GROUP")
+end
+
 local function InitializeModules()
     local db = UndauntedDB.modules
     
@@ -195,6 +399,10 @@ local function InitializeModules()
 
     if db.notes and addon.NoteDisplay then
         addon.NoteDisplay:Init()
+    end
+
+    if db.loot and addon.Loot then
+        addon.Loot:Init()
     end
 end
 
@@ -254,6 +462,16 @@ SlashCmdList["BREAK"] = function(msg)
     end
 end
 
+-- Slash for Loot
+SLASH_UNDAUNTEDLOOT1 = "/uloot"
+SlashCmdList["UNDAUNTEDLOOT"] = function(msg)
+    if msg == "test" then
+        if addon.Loot then addon.Loot:Test() end
+    else
+        -- Expects an item link
+        if addon.Loot then addon.Loot:StartSession(msg) end
+    end
+end
 
 
 Undaunted.ApplyRaidwarningSettings = ApplyRaidwarningSettings
