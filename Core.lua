@@ -300,9 +300,6 @@ function VersionUI:UpdateList()
         if entry.ver == "Waiting..." then
             row.Ver:SetTextColor(0.5, 0.5, 0.5)
             row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Waiting")
-        elseif entry.ver == "No Addon" then
-            row.Ver:SetTextColor(0.5, 0.5, 0.5)
-            row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-NotReady")
         elseif entry.ver == myVer then
              row.Ver:SetTextColor(0, 1, 0)
              row.Icon:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
@@ -387,7 +384,6 @@ end
 local function InitializeModules()
     local db = UndauntedDB.modules
     
-    -- Lazy load: Only run the Init functions if the module is enabled in DB
     if db.raidWarnings and addon.InitAccessibleWarnings then
         addon:InitAccessibleWarnings()
     end
@@ -462,13 +458,11 @@ SlashCmdList["BREAK"] = function(msg)
     end
 end
 
--- Slash for Loot
 SLASH_UNDAUNTEDLOOT1 = "/uloot"
 SlashCmdList["UNDAUNTEDLOOT"] = function(msg)
     if msg == "test" then
         if addon.Loot then addon.Loot:Test() end
     else
-        -- Expects an item link
         if addon.Loot then addon.Loot:StartSession(msg) end
     end
 end

@@ -23,7 +23,7 @@ local votingRows = {}
 local renderedRows = 0
 local sessionCounter = 0
 local knownAddonUsers = {}
-local activeIconBorder = {r=1, g=0.8, b=0, a=1}
+local activeIconBorder = {r=1, g=0.8, b=0, a=1} --todo
 
 local function GetSettings()
     return UndauntedDB.loot
@@ -129,7 +129,6 @@ function Loot:CreateSessionUI()
     f:SetBackdropColor(0, 0, 0, 0.8)
     f:Hide()
     
-    -- Make it movable
     f:SetMovable(true)
     f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
@@ -170,7 +169,7 @@ function Loot:GetSessionIcon(index)
         
         btn.Border = btn:CreateTexture(nil, "OVERLAY")
         btn.Border:SetAllPoints()
-        btn.Border:SetColorTexture(1, 0.8, 0, 0.6) -- Selection highlight
+        btn.Border:SetColorTexture(1, 0.8, 0, 0.6)
         btn.Border:SetDrawLayer("OVERLAY", 7)
         btn.Border:Hide()
         
@@ -195,8 +194,8 @@ function Loot:StartSession(itemLink)
     if channel == "WHISPER" then
         self:OnComm(UnitName("player"), msg) -- Local test
     else
-        C_ChatInfo.SendAddonMessage(COMM_PREFIX, "PING", channel) -- Check for addon users
-        C_ChatInfo.SendAddonMessage(COMM_PREFIX, msg, channel)    -- Start Session
+        C_ChatInfo.SendAddonMessage(COMM_PREFIX, "PING", channel)
+        C_ChatInfo.SendAddonMessage(COMM_PREFIX, msg, channel)
     end
 end
 
@@ -205,7 +204,6 @@ function Loot:SendVote(target, sessionID, voteID)
     if Ambiguate(target, "short") == UnitName("player") then
         self:OnComm(target, msg)
     else
-        -- Use WHISPER to the session owner to avoid spamming addon channel
         C_ChatInfo.SendAddonMessage(COMM_PREFIX, msg, "WHISPER", target)
     end
 end
@@ -214,7 +212,6 @@ function Loot:OnComm(sender, msg)
     local parts = { strsplit("~", msg) }
     local cmd = parts[1]
     
-    -- Track users who communicate
     local senderShort = Ambiguate(sender, "short")
     knownAddonUsers[senderShort] = true
 
@@ -241,7 +238,6 @@ function Loot:OnComm(sender, msg)
         }
         table.insert(sessionKeys, sessionID)
 
-        -- If I am the sender, show the Council UI
         if Ambiguate(sender, "short") == UnitName("player") then
             self:UpdateSessionSidebar()
             self:ShowSession(sessionID)
@@ -256,17 +252,14 @@ function Loot:OnComm(sender, msg)
 
         if not sessions[sessionID] then return end
 
-        -- Only the session owner should process votes.
         if Ambiguate(sessions[sessionID].sender, "short") ~= UnitName("player") then return end
 
-        -- Avoid duplicates
         for _, v in ipairs(sessions[sessionID].votes) do
             if v.player == senderShort then return end
         end
         
         table.insert(sessions[sessionID].votes, {player = senderShort, vote = voteID})
 
-        -- If the frame is visible and showing the correct session, update it live.
         if sessionFrame:IsShown() and currentViewSessionID == sessionID then
             self:UpdateSessionRow(senderShort)
         end
@@ -274,7 +267,6 @@ function Loot:OnComm(sender, msg)
 end
 
 function Loot:UpdateVotingFrame()
-    -- Hide all existing rows first
     for _, row in ipairs(votingRows) do row:Hide() end
 
     if #voteQueue == 0 then
@@ -302,13 +294,11 @@ function Loot:UpdateVotingFrame()
                 row.Icon:SetTexture(texture)
             end
 
-            -- Setup buttons
             for btnID, btn in ipairs(row.Buttons) do
                 btn:SetScript("OnClick", function()
                     self:SendVote(session.sender, sessionID, btnID)
                     addon.Logger:Info("Voted: " .. VOTE_TYPES[btnID].text)
                     
-                    -- Remove this session from queue
                     table.remove(voteQueue, i)
                     self:UpdateVotingFrame()
                 end)
@@ -357,7 +347,6 @@ function Loot:ShowSession(sessionID)
     sessionFrame.Title:SetText(session.item)
     self:ResetSessionFrame()
 
-    -- Highlight sidebar icon
     for i, id in ipairs(sessionKeys) do
         if sessionIcons[i] then
             if id == sessionID then
@@ -368,7 +357,6 @@ function Loot:ShowSession(sessionID)
         end
     end
     
-    -- Loop through Roster instead of just votes
     local rosterSet = {}
     if IsInRaid() then
         for i = 1, GetNumGroupMembers() do
@@ -430,7 +418,6 @@ end
 function Loot:EndSession(sessionID)
     sessions[sessionID] = nil
 
-    -- Remove from sessionKeys
     for i, id in ipairs(sessionKeys) do
         if id == sessionID then
             table.remove(sessionKeys, i)
@@ -438,7 +425,6 @@ function Loot:EndSession(sessionID)
         end
     end
 
-    -- Remove from voteQueue
     for i, id in ipairs(voteQueue) do
         if id == sessionID then
             table.remove(voteQueue, i)
@@ -460,7 +446,6 @@ function Loot:EndSession(sessionID)
 end
 
 function Loot:UpdateSessionRow(player)
-    -- Find the row for this player
     for _, row in ipairs(sessionRows) do
         if row.player == player and row:IsShown() then
             self:SetRowState(row, player)
