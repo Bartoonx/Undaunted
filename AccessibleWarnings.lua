@@ -51,7 +51,7 @@ local function GetFreeLine()
 end
 
 -- Function to show the warning at external frame
-function Undaunted_ShowWarning(msg)
+function Undaunted_ShowWarning(msg, r, g, b, size)
     if not frame then return end
 
     local line = GetFreeLine()
@@ -63,9 +63,17 @@ function Undaunted_ShowWarning(msg)
     UIFrameFadeRemoveFrame(line)
     
     local color = UndauntedDB.textColor
-    line:SetTextColor(color.r, color.g, color.b)
+    if r and g and b then
+        line:SetTextColor(r, g, b)
+    else
+        line:SetTextColor(color.r, color.g, color.b)
+    end
+    
     line:SetText(msg)
-    line:SetFont(UndauntedDB.font or "Fonts\\FRIZQT__.TTF", UndauntedDB.fontSize)
+    
+    local fSize = size or UndauntedDB.fontSize
+    line:SetFont(UndauntedDB.font or "Fonts\\FRIZQT__.TTF", fSize)
+    
     line:SetWidth(frame:GetWidth() - 40)
     line:SetAlpha(1)
     line.created = GetTime()

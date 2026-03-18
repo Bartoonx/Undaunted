@@ -281,16 +281,12 @@ function UndauntedWidgets:Dropdown(parent, entry, details)
     
     local menu = nil
     local labels, values = entry.getInitData(details)
-    local current = entry.getter(details)
-    local selectedIndex = 1
     
+    -- Initialize text only
+    local current = entry.getter(details)
     for i, v in ipairs(values) do
-        if v == current then
-            selectedIndex = i
-            break
-        end
+        if v == current then text:SetText(labels[i] or "") break end
     end
-    text:SetText(labels[selectedIndex] or "")
     
     dropdown:SetScript("OnEnter", function()
         dropdown:SetBackdropBorderColor(ACCENT_R, ACCENT_G, ACCENT_B)
@@ -309,9 +305,16 @@ function UndauntedWidgets:Dropdown(parent, entry, details)
             menu:Hide()
             return
         end
+
+        -- Refresh Data
+        if entry.getInitData then
+            labels, values = entry.getInitData(details)
+        end
         
-        if not menu then
-            menu = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
+        -- Always rebuild or clear menu to ensure dynamic updates
+        if menu then menu:Hide(); menu:SetParent(nil) end
+
+        menu = CreateFrame("Frame", nil, dropdown, "BackdropTemplate")
             menu:SetPoint("TOPLEFT", dropdown, "BOTTOMLEFT", 0, -2)
             menu:SetWidth(240)
             menu:SetBackdrop({
@@ -325,6 +328,12 @@ function UndauntedWidgets:Dropdown(parent, entry, details)
             
             local buttons = {}
             local menuHeight = 4
+            
+            current = entry.getter(details)
+            local selectedIndex = 1
+            for i, v in ipairs(values) do
+                if v == current then selectedIndex = i break end
+            end
             
             for i, labelText in ipairs(labels) do
                 local btn = CreateFrame("Button", nil, menu)
@@ -384,9 +393,8 @@ function UndauntedWidgets:Dropdown(parent, entry, details)
                 dropdown:SetBackdropBorderColor(0.4, 0.4, 0.4)
                 arrow:SetVertexColor(0.7, 0.7, 0.7)
             end)
-        end
         
-        for i, btn in ipairs(menu.buttons) do
+        for i, btn in ipairs(menu and menu.buttons or {}) do
             if i == selectedIndex then
                 btn.bg:SetColorTexture(ACCENT_R, ACCENT_G, ACCENT_B, 0.3)
                 btn.text:SetTextColor(ACCENT_R, ACCENT_G, ACCENT_B)
@@ -617,6 +625,12 @@ function UndauntedWidgets:EditBox(parent, entry)
     edit:SetScript("OnEscapePressed", function(self) 
         self:ClearFocus() 
     end)
+
+    edit:SetScript("OnTextChanged", function(self, userInput)
+        if userInput and entry.onChange then entry.onChange(self:GetText()) end
+    end)
+
+    if entry.onInit then entry.onInit(edit) end
     
     container.EditBox = edit
     container.Background = bg

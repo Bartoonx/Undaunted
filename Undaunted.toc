@@ -2,7 +2,7 @@
 ## Title: Undaunted
 ## Notes: Accessibility & visibility enhancements for Undaunted Guild players.
 ## Author: Freddo, Gartoon
-## Version: 0.25
+## Version: 0.26
 ## SavedVariables: UndauntedDB
 
 Core.lua

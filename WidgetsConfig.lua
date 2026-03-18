@@ -4,6 +4,127 @@ addon.Settings = {
     enabled = true,
     style = "Custom",
 }
+
+-- Triggers Logic
+local selectedTriggerIdx = 1
+local function GetSelectedTrigger()
+    if not UndauntedDB.triggers then UndauntedDB.triggers = {} end
+    if #UndauntedDB.triggers > 0 and (selectedTriggerIdx > #UndauntedDB.triggers or selectedTriggerIdx < 1) then
+        selectedTriggerIdx = 1
+    end
+    return UndauntedDB.triggers[selectedTriggerIdx]
+end
+
+local triggerSection = {
+    { kind = "sep" },
+    {
+        kind = "dropdown",
+        label = "Select Trigger to Edit",
+        getInitData = function()
+            local names = {}
+            local indices = {}
+            if UndauntedDB.triggers then
+                for i, t in ipairs(UndauntedDB.triggers) do
+                    table.insert(names, string.format("%d. %s (%s)", i, t.spellID or "?", t.msg or ""))
+                    table.insert(indices, i)
+                end
+            end
+            if #names == 0 then return {"(No Triggers)"}, {0} end
+            return names, indices
+        end,
+        getter = function() return selectedTriggerIdx end,
+        setter = function(s, v) 
+            selectedTriggerIdx = v 
+            if addon.MainUI.RefreshTab then addon.MainUI:RefreshTab(1) end
+        end
+    },
+    {
+        kind = "button",
+        label = "Add New Trigger",
+        onClick = function()
+            if not UndauntedDB.triggers then UndauntedDB.triggers = {} end
+            table.insert(UndauntedDB.triggers, {
+                enabled = true,
+                spellID = "",
+                msg = "New Alert",
+                color = {r=1, g=0, b=0},
+                size = 20
+            })
+            selectedTriggerIdx = #UndauntedDB.triggers
+            if addon.MainUI.RefreshTab then addon.MainUI:RefreshTab(1) end
+        end
+    },
+    {
+        kind = "button",
+        label = "Delete Selected",
+        onClick = function()
+            if UndauntedDB.triggers and UndauntedDB.triggers[selectedTriggerIdx] then
+                table.remove(UndauntedDB.triggers, selectedTriggerIdx)
+                selectedTriggerIdx = 1
+                if addon.MainUI.RefreshTab then addon.MainUI:RefreshTab(1) end
+            end
+        end
+    }
+}
+
+local function AddTriggerDetails(t)
+    table.insert(t, {
+        kind = "checkbox",
+        label = "Enabled",
+        getter = function() local t = GetSelectedTrigger() return t and t.enabled end,
+        setter = function(s, v) local t = GetSelectedTrigger() if t then t.enabled = v end end,
+    })
+    table.insert(t, {
+        kind = "editbox",
+        label = "Spell ID",
+        width = 150,
+        height = 40,
+        default = "", 
+        onInit = function(self) local t = GetSelectedTrigger() self:SetText(t and t.spellID or "") end,
+        onChange = function(v) local t = GetSelectedTrigger() if t then t.spellID = v end end
+    })
+    table.insert(t, {
+        kind = "editbox",
+        label = "Alert Message",
+        width = 250,
+        height = 40,
+        default = "",
+        onInit = function(self) local t = GetSelectedTrigger() self:SetText(t and t.msg or "") end,
+        onChange = function(v) local t = GetSelectedTrigger() if t then t.msg = v end end
+    })
+    table.insert(t, {
+        kind = "color",
+        label = "Color",
+        key = "dummy", 
+        onChange = function(s, r, g, b, a) 
+            local t = GetSelectedTrigger()
+            if t then t.color.r, t.color.g, t.color.b = r, g, b end
+        end,
+        -- Hack: Init color
+        onInit = function(btn) 
+            local t = GetSelectedTrigger()
+            if t then 
+                 local c = t.color
+                 btn:GetParent().Button:GetNormalTexture():SetColorTexture(c.r, c.g, c.b, 1) 
+            end
+        end
+    })
+    table.insert(t, {
+        kind = "slider",
+        label = "Size",
+        min = 10, max = 64, step = 1,
+        getter = function(s) local t = GetSelectedTrigger() return t and t.size or 20 end,
+        setter = function(s, v) local t = GetSelectedTrigger() if t then t.size = v end end,
+    })
+    table.insert(t, {
+        kind = "button",
+        label = "Sync Triggers to Raid",
+        onClick = function() if addon.SyncTriggers then addon:SyncTriggers() end end
+    })
+end
+
+AddTriggerDetails(triggerSection)
+
 -- self explained, kind is from WidgetsLoader.lua
 addon.WidgetsConfig = {
     [1] = {
@@ -111,8 +232,10 @@ addon.WidgetsConfig = {
                         local msg = messages[random(#messages)]
                         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
                     end
-                }
-
+                },
+                
+                -- Dynamic Trigger Section appended here
+                unpack(triggerSection)
             }
         }
     },

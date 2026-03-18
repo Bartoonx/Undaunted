@@ -16,6 +16,8 @@ local defaults = {
 
     loot = { enabled = true },
 
+    triggers = {},
+
     healerMana = {
         enabled = false,
         point = "TOP",
@@ -113,8 +115,88 @@ local function ApplyRaidwarningSettings()
     end
 end
 
+-- Trigger Syncing Logic
+local COMM_PREFIX_TRIGGERS = "UNDAUNTED_TRIG"
+C_ChatInfo.RegisterAddonMessagePrefix(COMM_PREFIX_TRIGGERS)
+
+function Undaunted:SyncTriggers()
+    if not (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) then
+        Logger:Error("Only Raid Leaders or Assistants can sync triggers.")
+        return
+    end
+
+    local channel = IsInRaid() and "RAID" or "PARTY"
+    if not IsInGroup() then 
+        Logger:Warning("Not in a group, cannot sync.")
+        return 
+    end
+
+    Logger:Info("Syncing triggers to group...")
+    
+    C_ChatInfo.SendAddonMessage(COMM_PREFIX_TRIGGERS, "CLEAR", channel)
+
+    for i, t in ipairs(UndauntedDB.triggers) do
+        if t and t.spellID then
+            local colorStr = string.format("%.2f:%.2f:%.2f", t.color.r, t.color.g, t.color.b)
+            local msg = string.format("%d~%s~%s~%s~%d~%s", 
+                i, 
+                t.enabled and "1" or "0", 
+                t.spellID or "", 
+                colorStr, 
+                t.size or 20,
+                t.msg or "Alert"
+            )
+            C_ChatInfo.SendAddonMessage(COMM_PREFIX_TRIGGERS, msg, channel)
+        end
+    end
+    Logger:Success("Sync complete.")
+end
+
+local triggerReceiver = CreateFrame("Frame")
+triggerReceiver:RegisterEvent("CHAT_MSG_ADDON")
+triggerReceiver:SetScript("OnEvent", function(_, _, prefix, message, _, sender)
+    if prefix ~= COMM_PREFIX_TRIGGERS then return end
+    if Ambiguate(sender, "short") == UnitName("player") then return end
+
+    if message == "CLEAR" then
+        wipe(UndauntedDB.triggers)
+        if addon.MainUI and addon.MainUI.RefreshTab then addon.MainUI:RefreshTab(1) end
+        return
+    end
+
+    local index, enabled, spellID, colorStr, size, msgText = strsplit("~", message, 6)
+    index = tonumber(index)
+    
+    if index then
+        if not UndauntedDB.triggers[index] then UndauntedDB.triggers[index] = { color = {} } end
+        local t = UndauntedDB.triggers[index]
+        
+        t.enabled = (enabled == "1")
+        t.spellID = spellID
+        t.msg = msgText
+        t.size = tonumber(size) or 20
+        
+        local r, g, b = strsplit(":", colorStr)
+        t.color = { r = tonumber(r) or 1, g = tonumber(g) or 0, b = tonumber(b) or 0 }
+        
+        if addon.MainUI and addon.MainUI.RefreshTab then addon.MainUI:RefreshTab(1) end
+    end
+end)
+
 local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
+f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+
+local function CheckSpellTriggers(unit, spellID)
+    if issecretvalue(spellID) then return end
+        
+    for _, t in ipairs(UndauntedDB.triggers) do
+        if t and t.enabled and t.spellID and tonumber(t.spellID) == spellID then
+            Undaunted_ShowWarning(t.msg, t.color.r, t.color.g, t.color.b, t.size)
+            return
+        end
+    end
+end
 
 C_ChatInfo.RegisterAddonMessagePrefix("UNDAUNTED_NOTE")
 
@@ -402,12 +484,22 @@ local function InitializeModules()
     end
 end
 
-f:SetScript("OnEvent", function(self, event, addon)
-    if addon == addonName then
-        LoadSettings()
-        InitializeModules()
-        ApplyRaidwarningSettings()
-        self:UnregisterEvent("ADDON_LOADED")
+local lastCastGUID
+f:SetScript("OnEvent", function(self, event,  ...)
+    if event == "ADDON_LOADED" then
+        local addon = ...
+        if addon == addonName then
+            LoadSettings()
+            InitializeModules()
+            ApplyRaidwarningSettings()
+            self:UnregisterEvent("ADDON_LOADED")
+        end
+    elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unit, castGUID, spellID = ...
+        if spellID and castGUID ~= lastCastGUID then
+            lastCastGUID = castGUID
+            CheckSpellTriggers(unit, spellID)
+        end
     end
 end)
 

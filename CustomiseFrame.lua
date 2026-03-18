@@ -139,6 +139,20 @@ function UI:Create()
         child:SetHeight(math.abs(yOffset)+50)
     end
 
+    function self:RefreshTab(id)
+        if not self.MainFrame or not self.MainFrame.pages[id] then return end
+        local page = self.MainFrame.pages[id]
+        
+        local children = {page:GetChildren()}
+        for _, child in ipairs(children) do
+            child:Hide()
+            child:SetParent(nil)
+        end
+        
+        BuildPage(page, addon.WidgetsConfig[id])
+        page:Show()
+    end
+
     for id, config in pairs(addon.WidgetsConfig) do
         local page = CreatePage(id)
         BuildPage(page, config)
